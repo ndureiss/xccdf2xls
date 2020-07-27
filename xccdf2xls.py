@@ -96,7 +96,7 @@ grouped = None
 groupName = None
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-p", "--path", help="XML files, alias (*) accepted, must be quoted, default \"*.xml\"", type=str, default="*")
+    "-p", "--path", help="XML files, alias (*) accepted, must be quoted, default \"*\"", type=str, default="*")
 parser.add_argument(
     "-g", "--group", help="reference to group result by, default null", type=str, default="")
 parser.add_argument(
