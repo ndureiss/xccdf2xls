@@ -17,6 +17,10 @@ def parsingFile(filePath):
     return tree
 
 
+def getXMLNS(rootElem):
+    return rootElem.tag[1:].partition("}")[0] if rootElem.tag[0] == "{" else None
+
+
 def computeRefResult(ruleResults):
     if "fail" in ruleResults:
         return "fail"
@@ -69,26 +73,27 @@ def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
     mainDict = dict()
     for machineId, file in enumerate(glob(filePath)):
         root = parsingFile(file).getroot()
-
+        xmlns = getXMLNS(root)
         # Map Rule IDs to Rule results
         ruleDict = dict()
-        for rr in root.iter("rule-result"):
-            result = rr.find("result")
+        for rr in root.iter("{%s}rule-result" % xmlns):
+            result = rr.find("{%s}result" % xmlns)
             ruleDict[rr.get("idref")] = result.text
 
         refDict = ruleDict
         # Grouping means mapping Rule refs to Rule IDs with Rule results
         if (grouped):
             refDict = dict()
-            for elem in root.iter("Rule"):
+            for elem in root.iter("{%s}Rule" % xmlns):
                 tmp = dict()
                 tmp[elem.get("id")] = ruleDict.get(elem.get("id"))
-                for r in elem.iter("reference"):
+                for r in elem.iter("{%s}reference" % xmlns):
                     key = r.text if r.get("href") == group else "UNREFERENCED"
                     addKeyValuePairToDict(key, tmp, refDict)
-                if len(list(elem.iter("reference"))) == 0:
+                if len(list(elem.iter("{%s}reference" % xmlns))) == 0:
                     addKeyValuePairToDict("UNREFERENCED", tmp, refDict)
-        mainDict[root.find("TestResult").find("target").text] = refDict
+        mainDict[root.find("{%s}TestResult" % xmlns).find(
+            "{%s}target" % xmlns).text] = refDict
     return mainDict
 
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Benchmark xmlns="" id="">
+<Benchmark xmlns="the_schema" id="">
   <version>1.3</version>
   <Group id="group1">
     <Group id="group11">
