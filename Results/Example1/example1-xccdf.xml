@@ -12,6 +12,7 @@
       <Rule id="rule3">
         <reference href="REF">REF2</reference>
         <reference href="REF">REF3</reference>
+        <reference href="REF">A_VERY_LONG_REFERENCE_YOU_KNOW</reference>
       </Rule>
       <Rule id="rule4">
         <reference href="REF1">REF3</reference>

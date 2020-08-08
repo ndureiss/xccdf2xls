@@ -5,6 +5,7 @@ from glob import glob
 from xml.etree.ElementTree import parse, ParseError
 from openpyxl import Workbook
 from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 
 
 def parsingFile(filePath):
@@ -65,6 +66,17 @@ def flatDictValues(dictionary):
     return res
 
 
+def autosizeWorksheet(worksheet):
+    dims = {}
+    for row in worksheet.rows:
+        for cell in row:
+            colLetter = cell.column_letter
+            dims[colLetter] = max(
+                (dims.get(colLetter, 0), len(str(cell.value))))
+    for col, value in dims.items():
+        worksheet.column_dimensions[col].width = value
+
+
 def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
     # Convert XCCDF result xml(s) to a JSON object
     # filePath: absolute path to find XML files
@@ -92,6 +104,8 @@ def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
                     addKeyValuePairToDict(key, tmp, refDict)
                 if len(list(elem.iter("{%s}reference" % xmlns))) == 0:
                     addKeyValuePairToDict("UNREFERENCED", tmp, refDict)
+            refDict = dict(sorted(refDict.items(), key=lambda x: x[0].lower()))
+
         mainDict[root.find("{%s}TestResult" % xmlns).find(
             "{%s}target" % xmlns).text] = refDict
     return mainDict
@@ -142,6 +156,9 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
         cell.value = rowValue
         if "[REF]" in worksheet.cell(row=rowIndex+2, column=1).value:
             cell.font = boldFont
+
+autosizeWorksheet(worksheet)
+worksheet.freeze_panes = worksheet["B2"]
 
 # Save file and quit
 workbook.save(args.output)
