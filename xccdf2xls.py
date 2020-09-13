@@ -4,7 +4,7 @@ from os import path
 from glob import glob
 from xml.etree.ElementTree import parse, ParseError
 from openpyxl import Workbook
-from openpyxl.styles import Font
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 
@@ -137,6 +137,7 @@ workbook = Workbook()
 worksheet = workbook.active
 worksheet.title = "Results"
 boldFont = Font(bold=True)
+background = PatternFill(fgColor="6D7685", fill_type="solid")
 
 for machineNum, (machineName, mapping) in enumerate(res.items()):
     if machineNum == 0:
@@ -145,8 +146,13 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
         for rowIndex, rowValue in enumerate(firstCol):
             cell = worksheet.cell(row=rowIndex+2, column=1)
             cell.value = rowValue
+            worksheet.row_dimensions[rowIndex+2].hidden = True
+            worksheet.row_dimensions[rowIndex+2].outlineLevel = 1
             if "[REF]" in rowValue:
                 cell.font = boldFont
+                cell.fill = background
+                worksheet.row_dimensions[rowIndex+2].hidden = False
+                worksheet.row_dimensions[rowIndex+2].outlineLevel = 0
 
     # Fill machine column
     worksheet.cell(row=1, column=machineNum+2).value = machineName
