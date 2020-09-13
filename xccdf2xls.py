@@ -193,7 +193,11 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
 
 for r in range(2, lastRow):
     cell = worksheet.cell(row=r, column=lastMachineCol)
-    cell.value = "TBD"
+    lineRes = sum([1 if worksheet.cell(
+        row=r, column=c).value == "pass" else 0 for c in range(2, lastMachineCol)])
+
+    cell.value = lineRes/(lastMachineCol-2)
+    cell.number_format = '0%'
     if "[REF]" in worksheet.cell(row=r, column=1).value:
         cell.font = boldFont
 
