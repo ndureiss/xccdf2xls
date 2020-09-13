@@ -4,7 +4,8 @@ from os import path
 from glob import glob
 from xml.etree.ElementTree import parse, ParseError
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles.borders import Border, Side
 from openpyxl.utils import get_column_letter
 
 
@@ -107,7 +108,7 @@ def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
             refDict = dict(sorted(refDict.items(), key=lambda x: x[0].lower()))
 
         mainDict[root.find("{%s}TestResult" % xmlns).find(
-            "{%s}target" % xmlns).text] = refDict
+            "{%s}target" % xmlns).text] = {"test_results": refDict, "score": "TBD"}
     return mainDict
 
 
@@ -138,30 +139,63 @@ worksheet = workbook.active
 worksheet.title = "Results"
 boldFont = Font(bold=True)
 background = PatternFill(fgColor="6D7685", fill_type="solid")
+commonBorders = Border(left=Side(style='thin'), right=Side(style='thin'))
+refBorders = Border(left=Side(style='thin'), right=Side(
+    style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
+lastMachineCol = 2
 for machineNum, (machineName, mapping) in enumerate(res.items()):
     if machineNum == 0:
         # Fill first column
-        firstCol = flatDictKeys(mapping) if grouped else list(mapping.keys())
+        firstCol = flatDictKeys(mapping["test_results"]) if grouped else list(
+            mapping["test_results"].keys())
+        lastRow = 2
         for rowIndex, rowValue in enumerate(firstCol):
             cell = worksheet.cell(row=rowIndex+2, column=1)
             cell.value = rowValue
+            cell.border = commonBorders
+            cell.alignment = Alignment(vertical="center")
             worksheet.row_dimensions[rowIndex+2].hidden = True
             worksheet.row_dimensions[rowIndex+2].outlineLevel = 1
+            lastRow += 1
             if "[REF]" in rowValue:
                 cell.font = boldFont
                 cell.fill = background
+                cell.border = refBorders
+                cell.alignment = Alignment(vertical="center")
                 worksheet.row_dimensions[rowIndex+2].hidden = False
                 worksheet.row_dimensions[rowIndex+2].outlineLevel = 0
+        cell = worksheet.cell(row=lastRow, column=1)
+        cell.value = "SCORE"
+        cell.font = boldFont
+        cell.border = refBorders
+        cell.alignment = Alignment(horizontal="right", vertical="center")
 
     # Fill machine column
     worksheet.cell(row=1, column=machineNum+2).value = machineName
-    machineCol = flatDictValues(mapping) if grouped else list(mapping.values())
+    machineCol = flatDictValues(mapping["test_results"]) if grouped else list(
+        mapping["test_results"].values())
     for rowIndex, rowValue in enumerate(machineCol):
         cell = worksheet.cell(row=rowIndex+2, column=machineNum+2)
         cell.value = rowValue
+        cell.border = commonBorders
+        cell.alignment = Alignment(vertical="center")
         if "[REF]" in worksheet.cell(row=rowIndex+2, column=1).value:
             cell.font = boldFont
+            cell.border = refBorders
+            cell.alignment = Alignment(vertical="center")
+    cell = worksheet.cell(row=lastRow, column=machineNum+2)
+    cell.value = mapping["score"]
+    cell.font = boldFont
+    cell.border = refBorders
+    cell.alignment = Alignment(horizontal="right", vertical="center")
+    lastMachineCol += 1
+
+for r in range(2, lastRow):
+    cell = worksheet.cell(row=r, column=lastMachineCol)
+    cell.value = "TBD"
+    if "[REF]" in worksheet.cell(row=r, column=1).value:
+        cell.font = boldFont
 
 autosizeWorksheet(worksheet)
 worksheet.freeze_panes = worksheet["B2"]
