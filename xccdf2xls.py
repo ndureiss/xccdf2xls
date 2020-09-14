@@ -37,6 +37,24 @@ def computeRefResult(ruleResults):
     return "notselected"
 
 
+def getBgColor(value):
+    if "fail" in value:
+        return "FF9AA2"
+    if "unknown" in value:
+        return "FFDAC1"
+    if "pass" in value:
+        return "E2F0CB"
+    if "unchecked" in value:
+        return "C1BBDD"
+    return "DABFDE"
+
+
+def getFontColor(value):
+    if value > 0.95:
+        return "009900"
+    return "CC0000"
+
+
 def addKeyValuePairToDict(key, value, dictionary):
     # Add a (Key, Value) pair to dictionary
     # key: the key of the pair
@@ -69,13 +87,14 @@ def flatDictValues(dictionary):
     return res
 
 
-def formatCell(cell, bold=False, color="FFFFFF", align="left", fullBorders=False):
+def formatCell(cell, bold=False, align="left", fullBorders=False, bgColor="FFFFFF", color="000000", nbFormat=''):
     _s = Side(style='thin')
-    cell.font = Font(bold=bold)
-    cell.fill = PatternFill(fgColor=color, fill_type="solid")
+    cell.font = Font(bold=bold, color=color)
+    cell.fill = PatternFill(fgColor=bgColor, fill_type="solid")
     cell.border = Border(left=_s, right=_s, top=_s,
                          bottom=_s) if fullBorders else Border(left=_s, right=_s)
     cell.alignment = Alignment(horizontal=align, vertical="center")
+    cell.number_format = nbFormat
 
 
 def autosizeWorksheet(worksheet):
@@ -118,9 +137,10 @@ def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
                     addKeyValuePairToDict("UNREFERENCED", tmp, refDict)
             refDict = dict(sorted(refDict.items(), key=lambda x: x[0].lower()))
 
-        mainDict[root.find("{%s}TestResult" % xmlns).find("{%s}target" % xmlns).text] = {
+        testResult = root.find("{%s}TestResult" % xmlns)
+        mainDict[testResult.find("{%s}target" % xmlns).text] = {
             "test_results": refDict,
-            "score": root.find("{%s}TestResult" % xmlns).find("{%s}score" % xmlns).text
+            "score": float(testResult.find("{%s}score" % xmlns).text) / float(testResult.find("{%s}score" % xmlns).get("maximum"))
         }
     return mainDict
 
@@ -150,11 +170,6 @@ res = xccdf2json(files, grouped, groupName)
 workbook = Workbook()
 worksheet = workbook.active
 worksheet.title = "Results"
-boldFont = Font(bold=True)
-background = PatternFill(fgColor="6D7685", fill_type="solid")
-commonBorders = Border(left=Side(style='thin'), right=Side(style='thin'))
-refBorders = Border(left=Side(style='thin'), right=Side(
-    style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
 lastMachineCol = 2
 for machineNum, (machineName, mapping) in enumerate(res.items()):
@@ -167,19 +182,20 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
             cell = worksheet.cell(row=rowIndex+2, column=1)
             cell.value = rowValue
             formatCell(cell)
-            worksheet.row_dimensions[rowIndex+2].hidden = True
-            worksheet.row_dimensions[rowIndex+2].outlineLevel = 1
             lastRow += 1
             if "[REF]" in rowValue:
-                formatCell(cell, bold=True, color="6D7685", fullBorders=True)
-                worksheet.row_dimensions[rowIndex+2].hidden = False
-                worksheet.row_dimensions[rowIndex+2].outlineLevel = 0
+                formatCell(cell, bold=True, bgColor="97A2FF", fullBorders=True)
+            else:
+                worksheet.row_dimensions[rowIndex+2].hidden = True
+                worksheet.row_dimensions[rowIndex+2].outlineLevel = 1
         cell = worksheet.cell(row=lastRow, column=1)
         cell.value = "SCAP \"PASSING\" SCORE"
         formatCell(cell, bold=True, align="right", fullBorders=True)
 
     # Fill machine column
-    worksheet.cell(row=1, column=machineNum+2).value = machineName
+    cell = worksheet.cell(row=1, column=machineNum+2)
+    cell.value = machineName
+    formatCell(cell, bold=True, align="center", fullBorders=True)
     machineCol = flatDictValues(mapping["test_results"]) if grouped else list(
         mapping["test_results"].values())
     for rowIndex, rowValue in enumerate(machineCol):
@@ -187,21 +203,29 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
         cell.value = rowValue
         formatCell(cell)
         if "[REF]" in worksheet.cell(row=rowIndex+2, column=1).value:
-            formatCell(cell, bold=True, fullBorders=True)
+            formatCell(cell, bold=True, fullBorders=True,
+                       bgColor=getBgColor(cell.value))
+
+    # Fill machine SCAP computed score
     cell = worksheet.cell(row=lastRow, column=machineNum+2)
     cell.value = mapping["score"]
-    formatCell(cell, bold=True, fullBorders=True, align="right")
+    formatCell(cell, bold=True, fullBorders=True,
+               align="right", nbFormat='0.00%')
     lastMachineCol += 1
 
+# Compute Test Achievement
 for r in range(2, lastRow):
     cell = worksheet.cell(row=r, column=lastMachineCol)
     lineRes = sum([1 if worksheet.cell(
         row=r, column=c).value == "pass" else 0 for c in range(2, lastMachineCol)])
 
     cell.value = lineRes/(lastMachineCol-2)
-    cell.number_format = '0%'
     if "[REF]" in worksheet.cell(row=r, column=1).value:
-        cell.font = boldFont
+        formatCell(cell, bold=True, align="right", nbFormat='0%',
+                   color=getFontColor(cell.value))
+    else:
+        formatCell(cell, align="right", fullBorders=True, nbFormat='0%')
+
 
 autosizeWorksheet(worksheet)
 worksheet.freeze_panes = worksheet["B2"]
