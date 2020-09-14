@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Benchmark xmlns="the_schema" id="">
+<Benchmark xmlns="the_schema2" id="">
   <version>1.3</version>
   <Group id="group1">
     <Group id="group11">
@@ -12,7 +12,7 @@
       <Rule id="rule3">
         <reference href="REF">REF2</reference>
         <reference href="REF">REF3</reference>
-        <reference href="REF">A_VERY_LONG_REFERENCE_YOU_KNOW</reference>
+        <reference href="REF">REF4</reference>
       </Rule>
       <Rule id="rule4">
         <reference href="REF1">REF3</reference>
@@ -26,9 +26,9 @@
     <Rule id="rule6">
     </Rule>
   </Group>
-  <TestResult id="xccdf_org.open-scap_testresult_Blabla-wke" start-time="2020-06-18T12:11:18" end-time="2020-06-18T12:12:06" version="1.3">
-    <profile idref="the_profil"/>
-    <target>MACHINE1</target>
+  <TestResult id="xccdf_org.open-scap_testresult" start-time="2020-06-18T12:11:18" end-time="2020-06-18T12:12:06" version="1.3">
+    <profile idref="the_profile"/>
+    <target>MACHINE2</target>
     <rule-result idref="rule1">
       <result>pass</result>
     </rule-result>
@@ -36,17 +36,17 @@
       <result>fail</result>
     </rule-result>
     <rule-result idref="rule3">
-      <result>unknown</result>
+      <result>fail</result>
     </rule-result>
     <rule-result idref="rule4">
-      <result>notselected</result>
+      <result>unchecked</result>
     </rule-result>
     <rule-result idref="rule5">
-      <result>notselected</result>
+      <result>pass</result>
     </rule-result>
     <rule-result idref="rule6">
       <result>pass</result>
     </rule-result>
-    <score system="urn:xccdf:scoring:default" maximum="100.000000">75.96</score>
+    <score system="urn:xccdf:scoring:default" maximum="100.000000">56.12</score>
   </TestResult>
 </Benchmark>
