@@ -8,6 +8,16 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.styles.borders import Border, Side
 from openpyxl.utils import get_column_letter
 
+####################################################################################################################
+#  Python script wrote by ndureiss
+#  Please write a Github issue in case of bugs or evolution request
+#
+#  Wrote for python3
+#  Dependencies to :
+#    - openpyxl
+
+####################################################################################################################
+
 
 def parsingFile(filePath):
     # Parsing a file as an XML
@@ -88,6 +98,14 @@ def flatDictValues(dictionary):
 
 
 def formatCell(cell, bold=False, align="left", fullBorders=False, bgColor="FFFFFF", color="000000", nbFormat=''):
+    # Applying a style to a cell
+    # cell: the targeted cell
+    # bold: bold text
+    # align: text alignement in cell
+    # fullBorders: applying borders to top and bottom
+    # bgColor: background color to apply, hexadecimal format
+    # color: font color to apply, hexadecimal format
+    # nbFormat: number format to apply if necessary
     _s = Side(style='thin')
     cell.font = Font(bold=bold, color=color)
     cell.fill = PatternFill(fgColor=bgColor, fill_type="solid")
@@ -98,6 +116,8 @@ def formatCell(cell, bold=False, align="left", fullBorders=False, bgColor="FFFFF
 
 
 def autosizeWorksheet(worksheet):
+    # Autosize columns of the worksheet
+    # TODO: Not optimal, try to improve this
     dims = {}
     for row in worksheet.rows:
         for cell in row:
@@ -145,6 +165,7 @@ def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
     return mainDict
 
 
+####################################################################################################################
 grouped = None
 groupName = None
 parser = argparse.ArgumentParser()
