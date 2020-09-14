@@ -107,8 +107,10 @@ def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
                     addKeyValuePairToDict("UNREFERENCED", tmp, refDict)
             refDict = dict(sorted(refDict.items(), key=lambda x: x[0].lower()))
 
-        mainDict[root.find("{%s}TestResult" % xmlns).find(
-            "{%s}target" % xmlns).text] = {"test_results": refDict, "score": "TBD"}
+        mainDict[root.find("{%s}TestResult" % xmlns).find("{%s}target" % xmlns).text] = {
+            "test_results": refDict,
+            "score": root.find("{%s}TestResult" % xmlns).find("{%s}score" % xmlns).text
+        }
     return mainDict
 
 
@@ -166,7 +168,7 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
                 worksheet.row_dimensions[rowIndex+2].hidden = False
                 worksheet.row_dimensions[rowIndex+2].outlineLevel = 0
         cell = worksheet.cell(row=lastRow, column=1)
-        cell.value = "SCORE"
+        cell.value = "SCAP \"PASSING\" SCORE"
         cell.font = boldFont
         cell.border = refBorders
         cell.alignment = Alignment(horizontal="right", vertical="center")

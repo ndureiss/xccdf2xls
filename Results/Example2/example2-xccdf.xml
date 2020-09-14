@@ -47,5 +47,6 @@
     <rule-result idref="rule6">
       <result>pass</result>
     </rule-result>
+    <score system="urn:xccdf:scoring:default" maximum="100.000000">0.56</score>
   </TestResult>
 </Benchmark>
