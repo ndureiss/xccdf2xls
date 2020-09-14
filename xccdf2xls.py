@@ -10,6 +10,8 @@ from openpyxl.utils import get_column_letter
 
 
 def parsingFile(filePath):
+    # Parsing a file as an XML
+    # filepath: the path of file to parse
     print("Reading file {} ..".format(filePath))
     try:
         tree = parse(filePath)
@@ -65,6 +67,15 @@ def flatDictValues(dictionary):
         res.append(computeRefResult(list(results)))
         [res.append(r) for r in results]
     return res
+
+
+def formatCell(cell, bold=False, color="FFFFFF", align="left", fullBorders=False):
+    _s = Side(style='thin')
+    cell.font = Font(bold=bold)
+    cell.fill = PatternFill(fgColor=color, fill_type="solid")
+    cell.border = Border(left=_s, right=_s, top=_s,
+                         bottom=_s) if fullBorders else Border(left=_s, right=_s)
+    cell.alignment = Alignment(horizontal=align, vertical="center")
 
 
 def autosizeWorksheet(worksheet):
@@ -155,23 +166,17 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
         for rowIndex, rowValue in enumerate(firstCol):
             cell = worksheet.cell(row=rowIndex+2, column=1)
             cell.value = rowValue
-            cell.border = commonBorders
-            cell.alignment = Alignment(vertical="center")
+            formatCell(cell)
             worksheet.row_dimensions[rowIndex+2].hidden = True
             worksheet.row_dimensions[rowIndex+2].outlineLevel = 1
             lastRow += 1
             if "[REF]" in rowValue:
-                cell.font = boldFont
-                cell.fill = background
-                cell.border = refBorders
-                cell.alignment = Alignment(vertical="center")
+                formatCell(cell, bold=True, color="6D7685", fullBorders=True)
                 worksheet.row_dimensions[rowIndex+2].hidden = False
                 worksheet.row_dimensions[rowIndex+2].outlineLevel = 0
         cell = worksheet.cell(row=lastRow, column=1)
         cell.value = "SCAP \"PASSING\" SCORE"
-        cell.font = boldFont
-        cell.border = refBorders
-        cell.alignment = Alignment(horizontal="right", vertical="center")
+        formatCell(cell, bold=True, align="right", fullBorders=True)
 
     # Fill machine column
     worksheet.cell(row=1, column=machineNum+2).value = machineName
@@ -180,17 +185,12 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
     for rowIndex, rowValue in enumerate(machineCol):
         cell = worksheet.cell(row=rowIndex+2, column=machineNum+2)
         cell.value = rowValue
-        cell.border = commonBorders
-        cell.alignment = Alignment(vertical="center")
+        formatCell(cell)
         if "[REF]" in worksheet.cell(row=rowIndex+2, column=1).value:
-            cell.font = boldFont
-            cell.border = refBorders
-            cell.alignment = Alignment(vertical="center")
+            formatCell(cell, bold=True, fullBorders=True)
     cell = worksheet.cell(row=lastRow, column=machineNum+2)
     cell.value = mapping["score"]
-    cell.font = boldFont
-    cell.border = refBorders
-    cell.alignment = Alignment(horizontal="right", vertical="center")
+    formatCell(cell, bold=True, fullBorders=True, align="right")
     lastMachineCol += 1
 
 for r in range(2, lastRow):
