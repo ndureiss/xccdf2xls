@@ -40,6 +40,8 @@ def computeRefResult(ruleResults):
         return "fail"
     if "unknown" in ruleResults:
         return "unknown"
+    if "error" in ruleResults:
+        return "error"
     if "pass" in ruleResults:
         return "pass"
     if "unchecked" in ruleResults:
@@ -49,17 +51,31 @@ def computeRefResult(ruleResults):
 
 def getBgColor(value):
     if "fail" in value:
-        return "FF9AA2"
+        return "DA9694"
     if "unknown" in value:
-        return "FFDAC1"
+        return "FABF8F"
     if "pass" in value:
-        return "E2F0CB"
+        return "C4C79B"
     if "unchecked" in value:
-        return "C1BBDD"
-    return "DABFDE"
+        return "BFBFBF"
+    return "FFFFFF"
 
 
 def getFontColor(value):
+    if "fail" in value:
+        return "632523"
+    if "unknown" in value:
+        return "974706"
+    if "pass" in value:
+        return "4F6228"
+    if "unchecked" in value:
+        return "808080"
+    if "notselected" in value:
+        return "000000"
+    return "632523"
+
+
+def getResFontColor(value):
     if value > 0.95:
         return "009900"
     return "CC0000"
@@ -126,6 +142,16 @@ def autosizeWorksheet(worksheet):
                 (dims.get(colLetter, 0), len(str(cell.value))))
     for col, value in dims.items():
         worksheet.column_dimensions[col].width = value
+
+
+def computeTestSuccessRate(worksheet, row, lastCol):
+    # Compute success rate of a given test over machines
+    # worksheet: the test result worksheet
+    # row: the test row index
+    # lastCol: the last machine column index
+    return sum([1 if worksheet.cell(row=row, column=c).value
+                in {"pass", "notselected", "unchecked"} else 0
+                for c in range(2, lastCol)])/(lastCol-2)
 
 
 def xccdf2json(filePath, grouped=False, group="UNREFERENCED"):
@@ -205,12 +231,12 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
             formatCell(cell)
             lastRow += 1
             if "[REF]" in rowValue:
-                formatCell(cell, bold=True, bgColor="97A2FF", fullBorders=True)
+                formatCell(cell, bold=True, bgColor="DCE6F1", fullBorders=True)
             else:
                 worksheet.row_dimensions[rowIndex+2].hidden = True
                 worksheet.row_dimensions[rowIndex+2].outlineLevel = 1
         cell = worksheet.cell(row=lastRow, column=1)
-        cell.value = "SCAP \"PASSING\" SCORE"
+        cell.value = "SCAP SCORE"
         formatCell(cell, bold=True, align="right", fullBorders=True)
 
     # Fill machine column
@@ -224,8 +250,8 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
         cell.value = rowValue
         formatCell(cell)
         if "[REF]" in worksheet.cell(row=rowIndex+2, column=1).value:
-            formatCell(cell, bold=True, fullBorders=True,
-                       bgColor=getBgColor(cell.value))
+            formatCell(cell, bold=True, bgColor=getBgColor(cell.value),
+                       fullBorders=True, color=getFontColor(cell.value))
 
     # Fill machine SCAP computed score
     cell = worksheet.cell(row=lastRow, column=machineNum+2)
@@ -237,13 +263,10 @@ for machineNum, (machineName, mapping) in enumerate(res.items()):
 # Compute Test Achievement
 for r in range(2, lastRow):
     cell = worksheet.cell(row=r, column=lastMachineCol)
-    lineRes = sum([1 if worksheet.cell(
-        row=r, column=c).value == "pass" else 0 for c in range(2, lastMachineCol)])
-
-    cell.value = lineRes/(lastMachineCol-2)
+    cell.value = computeTestSuccessRate(worksheet, r, lastMachineCol)
     if "[REF]" in worksheet.cell(row=r, column=1).value:
         formatCell(cell, bold=True, align="right", nbFormat='0%',
-                   color=getFontColor(cell.value))
+                   color=getResFontColor(cell.value))
     else:
         formatCell(cell, align="right", fullBorders=True, nbFormat='0%')
 
